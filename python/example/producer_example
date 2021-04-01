@@ -1,0 +1,24 @@
+import time
+import io
+import avro.schema
+from avro.io import DatumWriter
+from kafka import KafkaProducer
+
+producer = KafkaProducer(bootstrap_servers=['127.0.0.1:9092'])
+
+SCHEMA_PATH = "statistic.avsc"
+SCHEMA = avro.schema.parse(open(SCHEMA_PATH).read())
+
+while True:
+    writer = DatumWriter(SCHEMA)
+    bytes_writer = io.BytesIO()
+    encoder = avro.io.BinaryEncoder(bytes_writer)
+    type = 'nse_user\0'.encode()
+    data ={
+               "rssi":1,
+               "SNR":2,
+       }
+    writer.write(data, encoder)
+    raw_bytes = bytes_writer.getvalue()
+    producer.send('MAC_STATISTIC', key=type, value=raw_bytes)
+
